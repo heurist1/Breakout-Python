@@ -23,3 +23,7 @@ As you proceed to other levels:
 
 THATS ALL YOU NEED TO KNOW TO BE A CHAMPION.
 NOW YOU KNOW THE THEORY. CAN YOU BEAT THE GAME!!!!!!!!!!.
+
+
+Installation Instruction: Download all files and save them in one folder. (Must have pygame framework installed to run this game)
+Compilation command: python game.py
