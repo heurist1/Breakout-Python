@@ -7,10 +7,10 @@
 from __future__ import division
 import math
 import sys
-import os
+#import os
 import pygame
 import random
-import operator
+#import operator
 
 def draw_center(surface1, surface2, color):
     """Draw surface1 onto surface2 with center at position"""
@@ -782,7 +782,14 @@ class MyGame(object):
             ball.move(ball.speed)
 
             if self.paddle.rect.colliderect(ball.rect):
+				oldVal = ball.velocity[1]
                 self.check_for_collisions(ball, self.paddle)
+				if oldVal==ball.velocity[1]:
+					print('Paddle failed')
+					ball.velocity[1] *= -1
+					# move out of collision
+					ball.rect.bottom = self.paddle.rect.top - 1
+					ball.position[1] = ball.rect.bottom - ball.radius()
                 self.play_sound()
             
             for brick in self.bricks:
@@ -799,27 +806,32 @@ class MyGame(object):
                     else:
                         brick.strength -= 1
             
+			# Hit left
             if(ball.position[0] - ball.radius() <= 0):
                 self.play_sound()
                 ball.velocity[0] = -ball.velocity[0]
                 ball.position[0] = 0 + ball.radius()
 
+			# Hit right
             elif(ball.position[0] + ball.radius() >= self.width):
                 self.play_sound()
                 ball.velocity[0] = -ball.velocity[0]
                 ball.position[0] = self.width - ball.radius()
 
+			# Hit top
             elif(ball.position[1] - ball.radius() <= 0):
                 self.play_sound()
                 ball.velocity[1] = -ball.velocity[1]
                 ball.position[1] = 0 + ball.radius()
 
+			# Restrict paddle movement
             if(self.paddle.rect.left <= 0): self.paddle.rect.left = 0
             elif(self.paddle.rect.right >= self.width): self.paddle.rect.right = self.width
             
             for pu in self.visible_pu:
                 if(pu.rect.top >= self.height): self.visible_pu.remove(pu)
 
+			# Hit bottom
             if(ball.rect.top >= self.height):
                 if(len(self.balls) == 1):
                     pygame.mixer.music.stop()
@@ -845,7 +857,7 @@ class MyGame(object):
         self.sound.play()
 
     def play_game_over_sound(self):
-        self.sound = pygame.mixer.Sound("cry.wav")
+		self.sound = pygame.mixer.Sound("loose.wav")
         self.sound.play()
 
     def play_power_up_sound(self):
