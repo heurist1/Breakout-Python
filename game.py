@@ -27,17 +27,26 @@ class GameObject(object):
 		self.position = list(position[:])
 		self.rect = rect
 		self.color = None
+		self.scale = 1
 
 	def draw_on(self, screen, color):
 		draw_center(self.rect, screen, color)
 
 class Ball(GameObject):
-	def __init__(self, position, image, rect = None, color = None):
+	def __init__(self, position, image, scale=1, rect = None, color = None):
 		super(Ball, self).__init__(position, rect, color)
-		self.image = pygame.image.load(image)
+		self.imageNorm = pygame.image.load(image)
+		self.rect = self.imageNorm.get_rect()
+		self.image = pygame.transform.scale(self.imageNorm,[self.rect.width*scale, self.rect.height*scale])
 		self.rect = self.image.get_rect()
 		self.speed = 8
 		self.velocity = [1, 1]
+
+	def rescale(self, scale) :
+		self.scale = scale
+		self.rect = self.imageNorm.get_rect()
+		self.image = pygame.transform.scale(self.imageNorm,[self.rect.width*scale, self.rect.height*scale])
+		self.rect = self.image.get_rect()
 
 	def draw_on(self, screen, position):
 		rect = self.image.get_rect()
@@ -336,8 +345,9 @@ class MyGame(object):
 		paddle_width = 55
 		paddle_height = 10
 		color = [(255,0,0), (255, 182, 193), (251,165,0), (218, 165, 32), (255,255,0), (0, 255, 255), (0,255,0), (153, 50, 204), (0,0,255)]
-		types = [["missile", 10000], ["ooo", 10000], ["pad++", 10000], ["speed++", 10000], ["live++", 10000]]
-
+		#types = [["ball++", 10000] , ["ball++", 10000]]
+		types = [["missile", 10000], ["ooo", 10000], ["pad++", 10000], ["ball++", 10000], ["live++", 10000]]
+		#types = [["missile", 10000], ["ooo", 10000], ["pad++", 10000], ["speed++", 10000], ["live++", 10000]]
 		formation = []
 
 		for i in range(10):
@@ -617,6 +627,7 @@ class MyGame(object):
 		self.balls[0].speed = 8
 
 	def process_power(self, power_up):
+		print(power_up.type)
 		if(power_up.type == "missile"):
 			self.missile += 5
 		elif(power_up.type == "ooo"):
@@ -624,15 +635,17 @@ class MyGame(object):
 		elif(power_up.type == "pad++"):
 			if self.paddle.rect.width < 120:
 				self.paddle.rect.width += 20
-		elif(power_up.type == "speed++"):
+		elif(power_up.type == "ball++"):
 			for ball in self.balls:
-				ball.speed += 5
+				if ball.scale <=3:
+					ball.rescale(ball.scale+0.75)
 		elif(power_up.type == "live++"):
 				self.lives += 1
 
 	def check_for_collisions(self, ball, item):
 
 		# check collision with certain areas of the block/paddle
+		# prevent zero size rect
 		cornerwidth = max(1,item.rect.width/32)
 		cornerheight = max(1,item.rect.height/32)
 
@@ -655,7 +668,7 @@ class MyGame(object):
 			# move out of collision
 			ball.rect.bottom = item.rect.top -1
 			ball.position[1] = ball.rect.bottom - ball.radius()
-			return 'top left'
+			return
 
 		# if the ball hit the top right
 		"""if ball.rect.colliderect( pygame.Rect(item.rect.right-cornerwidth, item.rect.top, cornerwidth, cornerheight) ):"""
@@ -669,7 +682,7 @@ class MyGame(object):
 			# move out of collision
 			ball.rect.bottom = item.rect.top -1
 			ball.position[1] = ball.rect.bottom - ball.radius()
-			return 'top right'
+			return
 
 		# if the ball hit the bottom left
 		"""if ball.rect.colliderect( pygame.Rect(item.rect.left, item.rect.bottom-cornerheight, cornerwidth, cornerheight) ):"""
@@ -683,7 +696,7 @@ class MyGame(object):
 			# move out of collision
 			ball.rect.top  = item.rect.bottom + 1
 			ball.position[1] = ball.rect.top + ball.radius()
-			return 'bot left'
+			return
 
 		# if the ball hit the bottom right
 		"""if ball.rect.colliderect( pygame.Rect(item.rect.right, item.rect.bottom-cornerheight, cornerwidth, cornerheight) ):"""
@@ -697,7 +710,7 @@ class MyGame(object):
 			# move out of collision
 			ball.rect.top = item.rect.bottom + 1
 			ball.position[1] = ball.rect.top + ball.radius()
-			return 'bot right'
+			return
 
 		# if the ball hit the top edge
 		if ball.rect.colliderect( pygame.Rect(item.rect.left, item.rect.top, item.rect.width, cornerheight) ):
@@ -705,7 +718,7 @@ class MyGame(object):
 			# move out of collision
 			ball.rect.bottom = item.rect.top - 1
 			ball.position[1] = ball.rect.bottom - ball.radius()
-			return 'top'
+			return
 
 		# if the ball hit the bottom edge
 		elif ball.rect.colliderect( pygame.Rect(item.rect.left, item.rect.bottom-cornerheight, item.rect.width, cornerheight) ):
@@ -713,7 +726,7 @@ class MyGame(object):
 			# move out of collision
 			ball.rect.top = item.rect.bottom + 1
 			ball.position[1] = ball.rect.top + ball.radius()
-			return 'bottom'
+			return
 
 		# if the ball hit the left side
 		if ball.rect.colliderect(pygame.Rect(item.rect.left, item.rect.top, cornerwidth, item.rect.height)):
@@ -721,7 +734,7 @@ class MyGame(object):
 			# move out of collision
 			ball.rect.right = item.rect.left - 1
 			ball.position[0] = ball.rect.right - ball.radius()
-			return 'left'
+			return
 
 		# if the ball hit the right side
 		elif ball.rect.colliderect(pygame.Rect(item.rect.right-cornerwidth, item.rect.top, cornerwidth, item.rect.height)):
@@ -729,7 +742,7 @@ class MyGame(object):
 			# move out of collision
 			ball.rect.left = item.rect.right + 1
 			ball.position[0] = ball.rect.left + ball.radius()
-			return 'right'
+			return
 
 	def physics(self):
 		"""Do in-game physics here"""
@@ -830,6 +843,7 @@ class MyGame(object):
 					pygame.mixer.music.stop()
 					self.lives -= 1
 					self.state = False
+					self.balls[0].rescale (1)
 					if(self.lives >= 0):
 						self.continue_play()
 					else:
@@ -847,7 +861,7 @@ class MyGame(object):
 
 	def play_sound(self):
 		self.sound = pygame.mixer.Sound("bounce.wav")
-		self.sound.play()
+		#self.sound.play()
 
 	def play_game_over_sound(self):
 		self.sound = pygame.mixer.Sound("loose.wav")
@@ -855,7 +869,7 @@ class MyGame(object):
 
 	def play_power_up_sound(self):
 		self.sound = pygame.mixer.Sound("power_up.wav")
-		self.sound.play()
+		#self.sound.play()
 
 	def play_high_score_sound(self):
 		if(not self.sound == None): self.sound = None
